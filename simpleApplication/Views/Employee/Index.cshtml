@@ -1,0 +1,220 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<div class="container">
+    <h2>Users Record</h2>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" onclick="clearTextBox();">Add New User</button><br /><br />
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+               
+                <th>
+                    Name
+                </th>
+                <th>
+                    Age
+                </th>
+                <th>
+                    City
+                </th>
+               
+            </tr>
+        </thead>
+        <tbody class="tbody"></tbody>
+    </table>
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h4 class="modal-title" id="myModalLabel">Add Employee</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group"  >
+                        <label for="Id">Id</label>
+                        <input type="hidden" class="form-control" id="Id" placeholder="Id" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Name">Name</label>
+                        <input type="text" class="form-control" id="Name" placeholder="Name" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Age">Age</label>
+                        <input type="text" class="form-control" id="Age" placeholder="Age" />
+                    </div>
+                    <div class="form-group">
+                        <label for="City">City</label>
+                        <input type="text" class="form-control" id="City" placeholder="City" />
+                    </div>
+                   
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnAdd" onclick="return Add();">Add</button>
+                <button type="button" class="btn btn-primary" id="btnUpdate" style="display:none;" onclick="Update();">Update</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        loadData();
+    });
+    function loadData() {
+        $.ajax({
+            url: "/Employee/List",
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            
+            success: function (result) {
+                console.log(result);
+                debugger;
+                var html = '';
+                $.each(result, function (key, item) {
+                    html += '<tr>';
+                  
+                    html += '<td>' + item.Name + '</td>';
+                    html += '<td>' + item.Age + '</td>';
+                    html += '<td>' + item.City + '</td>';
+                    html += '<td><a href="#" onclick="return getbyID(' + item.Id + ')">Edit</a> | <a href="#" onclick="Delele(' + item.Id + ')">Delete</a></td>';
+                    html += '</tr>';
+                });
+                debugger;
+                $('.tbody').html(html);
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+    function Add() {
+        //var res = validate();
+        //if (res == false) {
+        //    return false;
+        //}
+        debugger;
+        var empObj = {
+            Id: $('#Id').val(),
+            Name: $('#Name').val(),
+            Age: $('#Age').val(),
+            City: $('#City').val(),
+
+        };
+        debugger;
+        $.ajax({
+            
+            url: "/Employee/Add",
+            data: JSON.stringify(empObj),
+            type: "POST",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                loadData();
+                $('#myModal').modal('hide');
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+    function getbyID(Id) {
+        debugger;
+        $('#Name').css('border-color', 'lightgrey');
+        $('#Age').css('border-color', 'lightgrey');
+        $('#City').css('border-color', 'lightgrey');
+        $.ajax({
+            url: "/Employee/getbyID/" + Id,
+            typr: "GET",
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (result) {
+                debugger;
+                $('#Id').val(result.Id);
+                $('#Name').val(result.Name);
+                $('#Age').val(result.Age);
+                $('#City').val(result.City);
+                $('#myModal').modal('show');
+                $('#btnUpdate').show();
+                $('#btnAdd').hide();
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+       
+    }
+    function Update() {
+        var res = validate();
+        if (res == false) {
+            return false;
+        }
+        var empObj = {
+            Id: $('#Id').val(),
+            Name: $('#Name').val(),
+            Age: $('#Age').val(),           
+            City: $('#City').val(),
+        };
+        debugger;
+        $.ajax({
+            url: "/Employee/Update",
+            data: JSON.stringify(obj = empObj),
+            type: "POST",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            
+            success: function (result) {
+                debugger;
+                loadData();
+                $('#myModal').modal('hide');
+                $('#Id').val("");
+                $('#Name').val("");
+                $('#Age').val("");               
+                $('#City').val("");
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+    function Delele(ID) {
+        var ans = confirm("Are you sure you want to delete this Record?");
+        if (ans) {
+            $.ajax({
+                url: "/Employee/Delete/" + ID,
+                type: "POST",
+                contentType: "application/json;charset=UTF-8",
+                dataType: "json",
+                success: function (result) {
+                    loadData();
+                },
+                error: function (errormessage) {
+                    alert(errormessage.responseText);
+                }
+            });
+        }
+    }
+    function clearTextBox() {
+        $('#ID').val("");
+        $('#Name').val("");
+        $('#Age').val("");
+        $('#City').val("");
+
+        $('#btnUpdate').hide();
+        $('#btnAdd').show();
+        $('#Name').css('border-color', 'lightgrey');
+        $('#Age').css('border-color', 'lightgrey');
+        $('#City').css('border-color', 'lightgrey');
+
+    }
+   
+</script>
